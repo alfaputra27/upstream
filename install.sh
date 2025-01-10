@@ -139,6 +139,28 @@ function restart_docker() {
     fi
 }
 
+# Fungsi untuk start container berdasarkan pilihan atau semua
+function start_docker() {
+    print_step "start Container Docker" "yellow"
+    list_docker_containers
+    echo
+    print_color "cyan" "Pilih container untuk di-restart:"
+    echo "1) Pilih container berdasarkan nama atau ID"
+    echo "2) start semua container"
+    read -p "Masukkan pilihan (1 atau 2): " CHOICE
+
+    if [[ "$CHOICE" == "1" ]]; then
+        read -p "Masukkan nama atau ID container: " CONTAINER_ID
+        docker start "$CONTAINER_ID"
+        print_color "green" "Container $CONTAINER_ID berhasil di-restart."
+    elif [[ "$CHOICE" == "2" ]]; then
+        docker start $(docker ps -a -q)
+        print_color "green" "Semua container berhasil start."
+    else
+        print_color "red" "Pilihan tidak valid."
+    fi
+}
+
 # Fungsi untuk stop container berdasarkan pilihan atau semua
 function stop_docker() {
     print_step "Stop Container Docker" "yellow"
@@ -212,20 +234,22 @@ echo -e "\033[1;36m==========================================\033[0m"
     echo "1) Install All (Docker dan Rclone)"
     echo "2) Edit Konfigurasi Rclone"
     echo "3) Lihat Docker yang Berjalan"
-    echo "4) Restart Container Docker (pilih atau semua)"
-    echo "5) Stop Container Docker (pilih atau semua)"
-    echo "6) Jalankan Rclone"
-    echo "7) Keluar"
+    echo "4) Start Container Docker (pilih atau semua)"
+    echo "5) Restart Container Docker (pilih atau semua)"
+    echo "6) Stop Container Docker (pilih atau semua)"
+    echo "7) Jalankan Rclone"
+    echo "0) Keluar"
     echo "=========================================="
     read -p "Pilih opsi: " CHOICE
     case $CHOICE in
         1) install_all ;;
         2) configure_rclone ;;
         3) show_docker ;;
-        4) restart_docker ;;
-        5) stop_docker ;;
-        6) run_rclone ;;
-        7) print_color "green" "Keluar dari script. Terima kasih!" ; exit ;;
+        4) start_docker ;;
+        5) restart_docker ;;
+        6) stop_docker ;;
+        7) run_rclone ;;
+        0) print_color "green" "Keluar dari script. Terima kasih!" ; exit ;;
         *) print_color "red" "Pilihan tidak valid!" ;;
     esac
     read -p "Tekan Enter untuk kembali ke menu utama..."
