@@ -7,7 +7,6 @@ if [ "$(id -u)" != "0" ]; then
     echo "Skrip ini harus dijalankan sebagai root. Gunakan sudo."
     exit 1
 fi
-chmod +x install.sh
 
 echo "Memulai instalasi..."
 
@@ -54,6 +53,11 @@ function sync_or_copy_rclone() {
     echo "Menjalankan Rclone $ACTION dari $SRC_FOLDER ke $DEST_FOLDER..."
     rclone $ACTION -P sftp:$SRC_FOLDER $DEST_FOLDER
     echo "Proses Rclone $ACTION selesai!"
+    
+    # Menyalakan ulang container Docker
+    echo "Menyalakan kembali semua container Docker..."
+    docker start $(docker ps -a -q)
+    echo "Semua container Docker telah dinyalakan kembali."
 }
 
 # Fungsi untuk membuat container Docker
