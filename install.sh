@@ -18,7 +18,19 @@ function print_color() {
     esac
 }
 
-
+# Fungsi progress bar
+function progress_bar() {
+    local DURATION=$1
+    local PROGRESS=0
+    local INCREMENT=$((100 / DURATION))
+    echo -n "["
+    for ((i=0; i<100; i+=INCREMENT)); do
+        sleep 1
+        echo -n "#"
+        ((PROGRESS += INCREMENT))
+    done
+    echo "]"
+}
 
 # Fungsi untuk mencetak header proses
 function print_step() {
@@ -29,8 +41,79 @@ function print_step() {
     print_color "$COLOR" "======================================="
 }
 
+# Fungsi Install All
+function install_all() {
+    # GPG Key Docker
+    print_step "Menambahkan GPG key resmi Docker" "green"
+    progress_bar 5
+    apt-get update -y > /dev/null 2>&1
+    apt-get install -y ca-certificates curl gnupg > /dev/null 2>&1
+    install -m 0755 -d /etc/apt/keyrings > /dev/null 2>&1
+    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg > /dev/null 2>&1
+    chmod a+r /etc/apt/keyrings/docker.gpg
+
+    # Tambah Repository
+    print_step "Menambahkan repository Docker ke Apt sources" "yellow"
+    progress_bar 3
+    echo \
+      "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
+      $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+      tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+    # Update Sistem
+    print_step "Memperbarui sistem" "blue"
+    progress_bar 5
+    apt-get update -y > /dev/null 2>&1
+
+    # Instal Docker
+    print_step "Menginstal Docker" "green"
+    progress_bar 7
+    apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin > /dev/null 2>&1
+
+    # Instal Rclone
+    print_step "Menginstal Rclone" "cyan"
+    progress_bar 4
+    apt-get install -y rclone > /dev/null 2>&1
+
+    # Konfigurasi Rclone
+    print_step "Mengatur konfigurasi Rclone" "yellow"
+    progress_bar 6
+    configure_rclone
+}
+
+# Fungsi untuk konfigurasi Rclone
+function configure_rclone() {
+    if [ -f "/root/.config/rclone/rclone.conf" ]; then
+        print_color "yellow" "Profil Rclone sudah ada. Edit konfigurasi?"
+        read -p "(y/n): " EDIT_CONFIG
+        if [[ "$EDIT_CONFIG" == "y" || "$EDIT_CONFIG" == "Y" ]]; then
+            nano /root/.config/rclone/rclone.conf
+        else
+            print_color "yellow" "Edit konfigurasi Rclone dilewati."
+        fi
+    else
+        print_color "red" "Tidak ada profil Rclone. Membuat profil baru..."
+        mkdir -p /root/.config/rclone
+        read -p "Masukkan nama host: " RCLONE_HOST
+        read -p "Masukkan port (default: 22): " RCLONE_PORT
+        RCLONE_PORT=${RCLONE_PORT:-22}
+        read -p "Masukkan username: " RCLONE_USER
+        read -sp "Masukkan password: " RCLONE_PASSWORD
+        echo
+        cat <<EOF > /root/.config/rclone/rclone.conf
+[sftp]
+type = sftp
+host = $RCLONE_HOST
+user = $RCLONE_USER
+port = $RCLONE_PORT
+pass = $(rclone obscure $RCLONE_PASSWORD)
+EOF
+        print_color "green" "Konfigurasi Rclone selesai!"
+    fi
+}
+
 # Fungsi untuk menampilkan daftar container Docker
-function list_docker_containers() {
+function show_docker() {
     docker ps -a --format "table {{.ID}}\t{{.Names}}\t{{.Status}}"
 }
 
@@ -78,6 +161,7 @@ function stop_docker() {
     fi
 }
 
+
 # Fungsi untuk menjalankan Rclone
 function run_rclone() {
     print_step "Pilih fungsi Rclone (Sync atau Copy)" "cyan"
@@ -92,7 +176,7 @@ function run_rclone() {
         ACTION="sync"
     fi
 
-# Menampilkan folder yang ada dalam /opt/ untuk dipilih
+   # Menampilkan folder yang ada dalam /opt/ untuk dipilih
 print_step "Menampilkan folder dalam /opt/" "blue"
 print_color "cyan" "Daftar folder dalam /opt/:"
 FOLDERS=$(ls /opt)
@@ -116,13 +200,12 @@ echo
 # Menu utama
 while true; do
     clear
-# Header tampilan awal
-echo -e "\033[1;36m==========================================\033[0m"
-echo -e "\033[1;36m Script By www.upstream.id\033[0m"
+    echo -e "\033[1;36m==========================================\033[0m"
+echo -e "\033[1;36m Script By www.pstream.id\033[0m"
 echo -e "\033[1;33m Jangan menyebar luaskan script ini diluar member upstream.id\033[0m"
 echo -e "\033[1;32m Email : support@upstream.id\033[0m"
 echo -e "\033[1;36m==========================================\033[0m"
-    
+
     echo "=========================================="
     echo " Pilihan Menu"
     echo "=========================================="
