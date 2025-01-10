@@ -108,23 +108,27 @@ else
     print_color "yellow" "Langkah Rclone dilewati!"
 fi
 
-# Step 7: Membuat container Docker
-print_step "Membuat container Docker" "blue"
-read -p "Masukkan jumlah container yang ingin dibuat: " NUM_CONTAINERS
-for (( i=1; i<=NUM_CONTAINERS; i++ ))
-do
-    echo "Konfigurasi untuk container ke-$i:"
-    read -p "Masukkan nama container: " CONTAINER_NAME
-    read -p "Masukkan port yang digunakan: " CONTAINER_PORT
-    CONFIG_PATH="/opt/${CONTAINER_NAME}/config"
-    DATA_PATH="/opt/${CONTAINER_NAME}/data"
-    mkdir -p $CONFIG_PATH $DATA_PATH
-    docker run -d --restart=always --name $CONTAINER_NAME \
-        -v $CONFIG_PATH:/core/config -v $DATA_PATH:/core/data \
-        -p $CONTAINER_PORT:8080 \
-        datarhei/restreamer:latest
-done
+# Instal dan jalankan container aplikasi
+print_step "Menjalankan container aplikasi..." "green"
+docker run -d --restart=always --name chillstep \
+   -v /opt/chillstep/config:/core/config -v /opt/chillstep/data:/core/data \
+   -p 2706:8080 \
+   datarhei/restreamer:latest
+
+docker run -d --restart=always --name ytlofi \
+   -v /opt/ytlofi/config:/core/config -v /opt/ytlofi/data:/core/data \
+   -p 2707:8080 \
+   datarhei/restreamer:latest
+
+docker run -d --restart=always --name lofime \
+   -v /opt/lofime/config:/core/config -v /opt/lofime/data:/core/data \
+   -p 2708:8080 \
+   datarhei/restreamer:latest
 print_color "green" "Semua container Docker telah dibuat!"
+
+# Stop container aplikasi
+print_step "Menghentikan container Docker..." "yellow"
+docker stop lofime chillstep ytlofi
 
 # Step 8: Pilih fungsi Rclone (Sync atau Copy)
 print_step "Pilih fungsi Rclone (Sync atau Copy)" "cyan"
@@ -139,38 +143,16 @@ else
     ACTION="sync"
 fi
 
-# Menampilkan folder yang ada dalam /opt/ untuk dipilih
-print_step "Menampilkan folder dalam /opt/" "blue"
-print_color "cyan" "Daftar folder dalam /opt/:"
-FOLDERS=$(ls /opt)
-echo "$FOLDERS"
-echo
+print_step "Cloning /opt/ Server Streaming $ACTION" "green"
+rclone $ACTION -P sftp:/opt/ /opt/
 
-# Menampilkan folder yang ada di sftp:/opt untuk dipilih
-print_step "Menampilkan folder dalam sftp:/opt/" "blue"
-print_color "cyan" "Daftar folder dalam sftp:/opt/:"
-RCLONE_SFTP_FOLDERS=$(rclone lsd sftp:/opt)
-echo "$RCLONE_SFTP_FOLDERS"
-echo
-
-# Meminta pengguna memilih folder sumber
-echo "Pilih folder sumber (misal: /opt/folder_sumber):"
-read -p "Masukkan nama folder sumber: " SRC_FOLDER
-
-# Meminta pengguna memasukkan folder tujuan
-echo "Masukkan folder tujuan (misal: /opt/folder_tujuan):"
-read -p "Masukkan folder tujuan: " DEST_FOLDER
-
-print_step "Menjalankan Rclone $ACTION" "green"
-rclone $ACTION -P sftp:$SRC_FOLDER $DEST_FOLDER
-
-# Step 9: Menyalakan ulang semua container Docker
+# Menyalakan ulang semua container Docker
 print_step "Menyalakan ulang semua container Docker" "yellow"
 docker start $(docker ps -a -q)
 print_color "green" "Semua container Docker telah dinyalakan kembali!"
 
 # Selesai
-print_color "cyan" "Instalasi selesai!"
+print_color "cyan" "Instalasi & Migrasi selesai!"
 
 }
 
@@ -390,8 +372,8 @@ echo -e "\033[1;36m==========================================\033[0m"
     echo " Pilihan Menu"
     echo "=========================================="
     echo "A) Migrasi LiveStream"
+    echo "1) Install All"
     echo "B) Install Screen"
-    echo "1) Install"
     echo "2) Edit Rclone"
     echo "3) Create Container"
     echo "4) Docker Running List"
