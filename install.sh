@@ -23,7 +23,7 @@ function print_color() {
 
 # Header tampilan awal
 echo -e "\033[1;36m==========================================\033[0m"
-echo -e "\033[1;36m Script By www.upstream.id\033[0m"
+echo -e "\033[1;36m Script By www.pstream.id\033[0m"
 echo -e "\033[1;33m Jangan menyebar luaskan script ini diluar member upstream.id\033[0m"
 echo -e "\033[1;32m Email : support@upstream.id\033[0m"
 echo -e "\033[1;36m==========================================\033[0m"
@@ -85,22 +85,28 @@ print_step "Menginstal Docker" "green"
 progress_bar 7
 apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin > /dev/null 2>&1
 
-# Step 5: Instal Rclone
-print_step "Menginstal Rclone" "cyan"
-progress_bar 4
-apt-get install -y rclone > /dev/null 2>&1
-
-# Step 6: Konfigurasi Rclone
-print_step "Mengatur konfigurasi Rclone" "yellow"
-progress_bar 6
-mkdir -p /root/.config/rclone
-read -p "Masukkan nama host: " RCLONE_HOST
-read -p "Masukkan port (default: 22): " RCLONE_PORT
-RCLONE_PORT=${RCLONE_PORT:-22}
-read -p "Masukkan username: " RCLONE_USER
-read -sp "Masukkan password: " RCLONE_PASSWORD
+# Menambahkan opsi untuk instalasi dan konfigurasi Rclone
 echo
-cat <<EOF > /root/.config/rclone/rclone.conf
+print_color "cyan" "Apakah Anda ingin menginstal dan mengonfigurasi Rclone? (y/n)"
+read -p "Pilih (y/n): " INSTALL_RCLONE
+
+if [[ "$INSTALL_RCLONE" == "y" || "$INSTALL_RCLONE" == "Y" ]]; then
+    # Step 5: Instal Rclone
+    print_step "Menginstal Rclone" "cyan"
+    progress_bar 4
+    apt-get install -y rclone > /dev/null 2>&1
+
+    # Step 6: Konfigurasi Rclone
+    print_step "Mengatur konfigurasi Rclone" "yellow"
+    progress_bar 6
+    mkdir -p /root/.config/rclone
+    read -p "Masukkan nama host: " RCLONE_HOST
+    read -p "Masukkan port (default: 22): " RCLONE_PORT
+    RCLONE_PORT=${RCLONE_PORT:-22}
+    read -p "Masukkan username: " RCLONE_USER
+    read -sp "Masukkan password: " RCLONE_PASSWORD
+    echo
+    cat <<EOF > /root/.config/rclone/rclone.conf
 [sftp]
 type = sftp
 host = $RCLONE_HOST
@@ -108,7 +114,10 @@ user = $RCLONE_USER
 port = $RCLONE_PORT
 pass = $(rclone obscure $RCLONE_PASSWORD)
 EOF
-print_color "green" "Konfigurasi Rclone selesai!"
+    print_color "green" "Konfigurasi Rclone selesai!"
+else
+    print_color "yellow" "Langkah Rclone dilewati!"
+fi
 
 # Step 7: Membuat container Docker
 print_step "Membuat container Docker" "blue"
@@ -145,7 +154,7 @@ read -p "Masukkan folder tujuan: " DEST_FOLDER
 print_step "Menjalankan Rclone $ACTION" "green"
 rclone $ACTION -P sftp:$SRC_FOLDER $DEST_FOLDER
 
-# Step 9: Menyalakan ulang container Docker
+# Step 9: Menyalakan ulang semua container Docker
 print_step "Menyalakan ulang semua container Docker" "yellow"
 docker start $(docker ps -a -q)
 print_color "green" "Semua container Docker telah dinyalakan kembali!"
