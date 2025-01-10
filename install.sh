@@ -23,7 +23,7 @@ function print_color() {
 
 # Header tampilan awal
 echo -e "\033[1;36m==========================================\033[0m"
-echo -e "\033[1;36m Script By www.pstream.id\033[0m"
+echo -e "\033[1;36m Script By www.upstream.id\033[0m"
 echo -e "\033[1;33m Jangan menyebar luaskan script ini diluar member upstream.id\033[0m"
 echo -e "\033[1;32m Email : support@upstream.id\033[0m"
 echo -e "\033[1;36m==========================================\033[0m"
@@ -173,12 +173,10 @@ echo "Masukkan folder tujuan (misal: /opt/folder_tujuan):"
 read -p "Masukkan folder tujuan: " DEST_FOLDER
 
 print_step "Menjalankan Rclone $ACTION" "green"
-rclone $ACTION -P sftp:$SRC_FOLDER $DEST_FOLDER
+nohup rclone $ACTION -P sftp:$SRC_FOLDER $DEST_FOLDER &
 
 # Step 9: Menyalakan ulang semua container Docker
 print_step "Menyalakan ulang semua container Docker" "yellow"
-docker start $(docker ps -a -q)
-print_color "green" "Semua container Docker telah dinyalakan kembali!"
+nohup docker start $(docker ps -a -q) &
 
-# Selesai
-print_color "cyan" "Instalasi selesai!"
+print_color "green" "Proses telah berjalan di latar belakang. Sesi SSH dapat ditutup."
