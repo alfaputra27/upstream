@@ -17,6 +17,14 @@ function print_color() {
         *) echo "$TEXT" ;;
     esac
 }
+# Header tampilan awal
+echo -e "\033[1;36m==========================================\033[0m"
+echo -e "\033[1;36m Script By www.upstream.id\033[0m"
+echo -e "\033[1;33m Jangan menyebar luaskan script ini diluar member upstream.id\033[0m"
+echo -e "\033[1;32m Email : support@upstream.id\033[0m"
+echo -e "\033[1;36m==========================================\033[0m"
+echo
+
 
 # Fungsi untuk mencetak header proses
 function print_step() {
