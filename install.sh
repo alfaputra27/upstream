@@ -1,12 +1,9 @@
 #!/bin/bash
 
-# ===========================================
-#        \033[1;36mScript By www.pstream.id\033[0m
-#     \033[1;33mJangan menyebar luaskan script ini diluar member upstream.id\033[0m
-#           \033[1;32mEmail: support@upstream.id\033[0m
-# ===========================================
+# Membersihkan terminal terlebih dahulu
+clear
 
-# Fungsi untuk mencetak teks dengan warna
+# Menambahkan teks header dengan warna
 function print_color() {
     local COLOR=$1
     local TEXT=$2
@@ -24,15 +21,13 @@ function print_color() {
     esac
 }
 
-# Header Tampilan Awal
-clear
-print_color "cyan" "=========================================="
-print_color "bold" "        \033[1;36mScript By www.pstream.id\033[0m"
-print_color "yellow" "     \033[1;33mJangan menyebar luaskan script ini diluar member upstream.id\033[0m"
-print_color "green" "           \033[1;32mEmail: support@upstream.id\033[0m"
-print_color "cyan" "=========================================="
+# Header tampilan awal
+echo -e "\033[1;36m==========================================\033[0m"
+echo -e "\033[1;36m Script By www.pstream.id\033[0m"
+echo -e "\033[1;33m Jangan menyebar luaskan script ini diluar member upstream.id\033[0m"
+echo -e "\033[1;32m Email : support@upstream.id\033[0m"
+echo -e "\033[1;36m==========================================\033[0m"
 echo
-echo "Memulai instalasi... Harap tunggu."
 
 # Fungsi untuk menampilkan progress bar
 function progress_bar() {
