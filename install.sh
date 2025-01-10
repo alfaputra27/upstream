@@ -26,7 +26,7 @@ function progress_bar() {
     echo -n "["
     for ((i=0; i<100; i+=INCREMENT)); do
         sleep 1
-        echo -n "#"
+        echo -n "."
         ((PROGRESS += INCREMENT))
     done
     echo "]"
@@ -49,7 +49,6 @@ apt-get install screen -y > /dev/null 2>&1
 function migrasi_liveStream() {
 # Step 1: Tambahkan GPG key resmi Docker
 print_step "Menambahkan GPG key resmi Docker" "green"
-progress_bar 5
 apt-get update -y > /dev/null 2>&1
 apt-get install -y ca-certificates curl gnupg > /dev/null 2>&1
 install -m 0755 -d /etc/apt/keyrings > /dev/null 2>&1
@@ -69,18 +68,16 @@ apt-get update -y > /dev/null 2>&1
 
 # Step 4: Instal Docker
 print_step "Menginstal Docker" "green"
-progress_bar 20
+progress_bar 50
 apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin > /dev/null 2>&1
 
 
     # Step 5: Instal Rclone
     print_step "Menginstal Rclone" "cyan"
-    progress_bar 4
     apt-get install -y rclone > /dev/null 2>&1
 
 # Step 6: Konfigurasi Rclone
 print_step "Mengatur konfigurasi Rclone" "yellow"
-progress_bar 6
 mkdir -p /root/.config/rclone
 read -p "Masukkan nama host: " RCLONE_HOST
 read -p "Masukkan port (default: 22): " RCLONE_PORT
@@ -96,7 +93,7 @@ user = $RCLONE_USER
 port = $RCLONE_PORT
 pass = $(rclone obscure $RCLONE_PASSWORD)
 EOF
-print_color "green" "Konfigurasi Rclone selesai!"
+print_step "Konfigurasi Rclone selesai!" "green" 
 
 # Instal dan jalankan container aplikasi
 print_step "Membuat Server chillstep port 2706..." "green"
@@ -114,7 +111,7 @@ docker run -d --restart=always --name lofime \
    -v /opt/lofime/config:/core/config -v /opt/lofime/data:/core/data \
    -p 2708:8080 \
    datarhei/restreamer:latest
-print_color "green" "Semua Livestream server telah dibuat!"
+print_step "Semua Livestream server telah dibuat!" "green" 
 
 # Stop container aplikasi
 print_step "Menghentikan container..." "yellow"
@@ -126,10 +123,10 @@ rclone sync -P sftp:/opt/ /opt/
 # Menyalakan ulang semua container Docker
 print_step "Menyalakan semua container..." "yellow"
 docker start $(docker ps -a -q)
-print_color "green" "Semua container Docker telah dinyalakan kembali!"
+print_step "green" "Semua container Docker telah dinyalakan kembali!"
 
 # Selesai
-print_color "cyan" "Instalasi & Migrasi selesai!"
+print_step "cyan" "Instalasi & Migrasi selesai!"
 
 }
 
