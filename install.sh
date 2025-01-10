@@ -113,7 +113,7 @@ EOF
 }
 
 # Fungsi untuk menampilkan daftar container Docker
-function show_docker() {
+function list_docker_containers() {
     docker ps -a --format "table {{.ID}}\t{{.Names}}\t{{.Status}}"
 }
 
@@ -244,7 +244,7 @@ echo -e "\033[1;36m==========================================\033[0m"
     case $CHOICE in
         1) install_all ;;
         2) configure_rclone ;;
-        3) show_docker ;;
+        3) list_docker_containers ;;
         4) start_docker ;;
         5) restart_docker ;;
         6) stop_docker ;;
