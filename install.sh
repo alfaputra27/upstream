@@ -150,11 +150,18 @@ else
     ACTION="sync"
 fi
 
-# Menampilkan folder yang ada dalam /opt/ untuk dipilih
+# Menampilkan folder yang ada di lokal /opt/ untuk dipilih
 print_step "Menampilkan folder dalam /opt/" "blue"
 print_color "cyan" "Daftar folder dalam /opt/:"
 FOLDERS=$(ls /opt)
 echo "$FOLDERS"
+echo
+
+# Menampilkan folder remote server /opt/ untuk dipilih
+print_step "Menampilkan remote server file /opt/" "blue"
+print_color "cyan" "Daftar folder dalam /opt/ remote:"
+FOLDERSserver=$(rclone ls sftp:/opt/)
+echo "$FOLDERSserver"
 echo
 
 # Meminta pengguna memilih folder sumber
