@@ -81,6 +81,26 @@ function install_all() {
     configure_rclone
 }
 
+# Membuat container Docker
+function create_container() {
+print_step "Membuat container Docker" "blue"
+read -p "Masukkan jumlah container yang ingin dibuat: " NUM_CONTAINERS
+for (( i=1; i<=NUM_CONTAINERS; i++ ))
+do
+    echo "Konfigurasi untuk container ke-$i:"
+    read -p "Masukkan nama container: " CONTAINER_NAME
+    read -p "Masukkan port yang digunakan: " CONTAINER_PORT
+    CONFIG_PATH="/opt/${CONTAINER_NAME}/config"
+    DATA_PATH="/opt/${CONTAINER_NAME}/data"
+    mkdir -p $CONFIG_PATH $DATA_PATH
+    docker run -d --restart=always --name $CONTAINER_NAME \
+        -v $CONFIG_PATH:/core/config -v $DATA_PATH:/core/data \
+        -p $CONTAINER_PORT:8080 \
+        datarhei/restreamer:latest
+done
+print_color "green" "Semua container Docker telah dibuat!"
+}
+
 # Fungsi untuk konfigurasi Rclone
 function configure_rclone() {
     if [ -f "/root/.config/rclone/rclone.conf" ]; then
@@ -233,22 +253,24 @@ echo -e "\033[1;36m==========================================\033[0m"
     echo "=========================================="
     echo "1) Install"
     echo "2) Edit Rclone"
-    echo "3) Docker Running List"
-    echo "4) Start Container"
-    echo "5) Restart Container"
-    echo "6) Stop Container"
-    echo "7) Run Rclone"
+    echo "3) Create Container"
+    echo "4) Docker Running List"
+    echo "5) Start Container"
+    echo "6) Restart Container"
+    echo "7) Stop Container"
+    echo "8) Run Rclone"
     echo "0) Keluar"
     echo "=========================================="
     read -p "Pilih opsi: " CHOICE
     case $CHOICE in
         1) install_all ;;
         2) configure_rclone ;;
-        3) list_docker_containers ;;
-        4) start_docker ;;
-        5) restart_docker ;;
-        6) stop_docker ;;
-        7) run_rclone ;;
+        3) create_container ;;
+        4) list_docker_containers ;;
+        5) start_docker ;;
+        6) restart_docker ;;
+        7) stop_docker ;;
+        8) run_rclone ;;
         0) print_color "green" "Keluar dari script. Terima kasih!" ; exit ;;
         *) print_color "red" "Pilihan tidak valid!" ;;
     esac
