@@ -127,6 +127,18 @@ EOF
 else
     print_color "yellow" "Langkah Rclone dilewati!"
 fi
+# Step 8: Pilih fungsi Rclone (Sync atau Copy)
+print_step "Pilih fungsi Rclone (Sync atau Copy)" "cyan"
+echo "1) Sync"
+echo "2) Copy"
+read -p "Masukkan pilihan Anda (1 atau 2): " RCLONE_ACTION
+if [[ "$RCLONE_ACTION" == "1" ]]; then
+    ACTION="sync"
+elif [[ "$RCLONE_ACTION" == "2" ]]; then
+    ACTION="copy"
+else
+    ACTION="sync"
+fi
 
 # Step 7: Menampilkan folder dan menjalankan Rclone
 print_step "Menampilkan folder dalam /opt/ dan menjalankan Rclone" "blue"
@@ -136,7 +148,6 @@ print_color "cyan" "Daftar folder dalam sftp:/opt/:"
 rclone lsd sftp:/opt
 read -p "Masukkan folder sumber: " SRC_FOLDER
 read -p "Masukkan folder tujuan: " DEST_FOLDER
-read -p "Pilih aksi Rclone (sync/copy): " ACTION
 run_with_screen "rclone_process" "rclone $ACTION -P sftp:$SRC_FOLDER $DEST_FOLDER"
 
 # Step 8: Menyalakan ulang semua container Docker
