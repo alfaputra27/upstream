@@ -58,7 +58,6 @@ chmod a+r /etc/apt/keyrings/docker.gpg
 
 # Step 2: Tambahkan repository Docker
 print_step "Menambahkan repository Docker ke Apt sources" "yellow"
-progress_bar 3
 echo \
   "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
   $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
@@ -66,20 +65,14 @@ echo \
 
 # Step 3: Perbarui sistem
 print_step "Memperbarui sistem" "blue"
-progress_bar 5
 apt-get update -y > /dev/null 2>&1
 
 # Step 4: Instal Docker
 print_step "Menginstal Docker" "green"
-progress_bar 7
+progress_bar 20
 apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin > /dev/null 2>&1
 
-# Menambahkan opsi untuk instalasi dan konfigurasi Rclone
-echo
-print_color "cyan" "Apakah Anda ingin menginstal dan mengonfigurasi Rclone? (y/n)"
-read -p "Pilih (y/n): " INSTALL_RCLONE
 
-if [[ "$INSTALL_RCLONE" == "y" || "$INSTALL_RCLONE" == "Y" ]]; then
     # Step 5: Instal Rclone
     print_step "Menginstal Rclone" "cyan"
     progress_bar 4
@@ -109,45 +102,32 @@ else
 fi
 
 # Instal dan jalankan container aplikasi
-print_step "Menjalankan container aplikasi..." "green"
+print_step "Membuat Server chillstep port 2706..." "green"
 docker run -d --restart=always --name chillstep \
    -v /opt/chillstep/config:/core/config -v /opt/chillstep/data:/core/data \
    -p 2706:8080 \
    datarhei/restreamer:latest
-
+print_step "Membuat Server ytlofi port 2707..." "green"
 docker run -d --restart=always --name ytlofi \
    -v /opt/ytlofi/config:/core/config -v /opt/ytlofi/data:/core/data \
    -p 2707:8080 \
    datarhei/restreamer:latest
-
+print_step "Membuat Server lofime port 2708..." "green"
 docker run -d --restart=always --name lofime \
    -v /opt/lofime/config:/core/config -v /opt/lofime/data:/core/data \
    -p 2708:8080 \
    datarhei/restreamer:latest
-print_color "green" "Semua container Docker telah dibuat!"
+print_color "green" "Semua Livestream server telah dibuat!"
 
 # Stop container aplikasi
-print_step "Menghentikan container Docker..." "yellow"
+print_step "Menghentikan container..." "yellow"
 docker stop lofime chillstep ytlofi
 
-# Step 8: Pilih fungsi Rclone (Sync atau Copy)
-print_step "Pilih fungsi Rclone (Sync atau Copy)" "cyan"
-echo "1) Sync"
-echo "2) Copy"
-read -p "Masukkan pilihan Anda (1 atau 2): " RCLONE_ACTION
-if [[ "$RCLONE_ACTION" == "1" ]]; then
-    ACTION="sync"
-elif [[ "$RCLONE_ACTION" == "2" ]]; then
-    ACTION="copy"
-else
-    ACTION="sync"
-fi
-
-print_step "Cloning /opt/ Server Streaming $ACTION" "green"
-rclone $ACTION -P sftp:/opt/ /opt/
+print_step "Start Cloning /opt/ Server Streaming $ACTION" "green"
+rclone sync -P sftp:/opt/ /opt/
 
 # Menyalakan ulang semua container Docker
-print_step "Menyalakan ulang semua container Docker" "yellow"
+print_step "Menyalakan semua container..." "yellow"
 docker start $(docker ps -a -q)
 print_color "green" "Semua container Docker telah dinyalakan kembali!"
 
