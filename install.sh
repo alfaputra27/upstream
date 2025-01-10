@@ -23,11 +23,25 @@ function print_color() {
 
 # Header tampilan awal
 echo -e "\033[1;36m==========================================\033[0m"
-echo -e "\033[1;36m Script By www.upstream.id\033[0m"
+echo -e "\033[1;36m Script By www.pstream.id\033[0m"
 echo -e "\033[1;33m Jangan menyebar luaskan script ini diluar member upstream.id\033[0m"
 echo -e "\033[1;32m Email : support@upstream.id\033[0m"
 echo -e "\033[1;36m==========================================\033[0m"
 echo
+
+# Fungsi untuk menampilkan progress bar
+function progress_bar() {
+    local DURATION=$1
+    local PROGRESS=0
+    local INCREMENT=$((100 / DURATION))
+    echo -n "["
+    for ((i=0; i<100; i+=INCREMENT)); do
+        sleep 1
+        echo -n "#"
+        ((PROGRESS += INCREMENT))
+    done
+    echo "]"
+}
 
 # Fungsi untuk mencetak header proses
 function print_step() {
@@ -44,14 +58,48 @@ if [ "$(id -u)" != "0" ]; then
     exit 1
 fi
 
+# Step 1: Tambahkan GPG key resmi Docker
+print_step "Menambahkan GPG key resmi Docker" "green"
+progress_bar 5
+apt-get update -y > /dev/null 2>&1
+apt-get install -y ca-certificates curl gnupg > /dev/null 2>&1
+install -m 0755 -d /etc/apt/keyrings > /dev/null 2>&1
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg > /dev/null 2>&1
+chmod a+r /etc/apt/keyrings/docker.gpg
+
+# Step 2: Tambahkan repository Docker
+print_step "Menambahkan repository Docker ke Apt sources" "yellow"
+progress_bar 3
+echo \
+  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
+  $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+  tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+# Step 3: Perbarui sistem
+print_step "Memperbarui sistem" "blue"
+progress_bar 5
+apt-get update -y > /dev/null 2>&1
+
+
+# Step 4: Instal Docker
+print_step "Menginstal Docker" "green"
+progress_bar 7
+apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin > /dev/null 2>&1
+
 # Menambahkan opsi untuk instalasi dan konfigurasi Rclone
 echo
 print_color "cyan" "Apakah Anda ingin menginstal dan mengonfigurasi Rclone? (y/n)"
 read -p "Pilih (y/n): " INSTALL_RCLONE
 
 if [[ "$INSTALL_RCLONE" == "y" || "$INSTALL_RCLONE" == "Y" ]]; then
-    # Instal dan konfigurasi Rclone
+    # Step 5: Instal Rclone
+    print_step "Menginstal Rclone" "cyan"
+    progress_bar 4
     apt-get install -y rclone > /dev/null 2>&1
+
+    # Step 6: Konfigurasi Rclone
+    print_step "Mengatur konfigurasi Rclone" "yellow"
+    progress_bar 6
     mkdir -p /root/.config/rclone
     read -p "Masukkan nama host: " RCLONE_HOST
     read -p "Masukkan port (default: 22): " RCLONE_PORT
@@ -72,9 +120,26 @@ else
     print_color "yellow" "Langkah Rclone dilewati!"
 fi
 
-# Pilih fungsi Rclone (Sync atau Copy)
-echo
-print_color "cyan" "Pilih fungsi Rclone (Sync atau Copy)"
+# Step 7: Membuat container Docker
+print_step "Membuat container Docker" "blue"
+read -p "Masukkan jumlah container yang ingin dibuat: " NUM_CONTAINERS
+for (( i=1; i<=NUM_CONTAINERS; i++ ))
+do
+    echo "Konfigurasi untuk container ke-$i:"
+    read -p "Masukkan nama container: " CONTAINER_NAME
+    read -p "Masukkan port yang digunakan: " CONTAINER_PORT
+    CONFIG_PATH="/opt/${CONTAINER_NAME}/config"
+    DATA_PATH="/opt/${CONTAINER_NAME}/data"
+    mkdir -p $CONFIG_PATH $DATA_PATH
+    docker run -d --restart=always --name $CONTAINER_NAME \
+        -v $CONFIG_PATH:/core/config -v $DATA_PATH:/core/data \
+        -p $CONTAINER_PORT:8080 \
+        datarhei/restreamer:latest
+done
+print_color "green" "Semua container Docker telah dibuat!"
+
+# Step 8: Pilih fungsi Rclone (Sync atau Copy)
+print_step "Pilih fungsi Rclone (Sync atau Copy)" "cyan"
 echo "1) Sync"
 echo "2) Copy"
 read -p "Masukkan pilihan Anda (1 atau 2): " RCLONE_ACTION
@@ -86,30 +151,35 @@ else
     ACTION="sync"
 fi
 
-# Menampilkan folder lokal dan sftp
+# Menampilkan folder yang ada dalam /opt/ untuk dipilih
 print_step "Menampilkan folder dalam /opt/" "blue"
+print_color "cyan" "Daftar folder dalam /opt/:"
 FOLDERS=$(ls /opt)
 echo "$FOLDERS"
+echo
 
+# Menampilkan folder yang ada di sftp:/opt untuk dipilih
 print_step "Menampilkan folder dalam sftp:/opt/" "blue"
+print_color "cyan" "Daftar folder dalam sftp:/opt/:"
 RCLONE_SFTP_FOLDERS=$(rclone lsd sftp:/opt)
 echo "$RCLONE_SFTP_FOLDERS"
+echo
 
-# Meminta pengguna memasukkan folder sumber dan tujuan
-read -p "Masukkan folder sumber (misal: /opt/folder_sumber): " SRC_FOLDER
-read -p "Masukkan folder tujuan (misal: /opt/folder_tujuan): " DEST_FOLDER
+# Meminta pengguna memilih folder sumber
+echo "Pilih folder sumber (misal: /opt/folder_sumber):"
+read -p "Masukkan nama folder sumber: " SRC_FOLDER
 
-# Jalankan proses Rclone
+# Meminta pengguna memasukkan folder tujuan
+echo "Masukkan folder tujuan (misal: /opt/folder_tujuan):"
+read -p "Masukkan folder tujuan: " DEST_FOLDER
+
 print_step "Menjalankan Rclone $ACTION" "green"
-screen -dmS rclone_process rclone $ACTION -P $SRC_FOLDER $DEST_FOLDER
+rclone $ACTION -P sftp:$SRC_FOLDER $DEST_FOLDER
 
-# Menunggu proses Rclone selesai dan menyalakan Docker
-print_step "Menunggu Rclone selesai" "yellow"
-screen -ls
-read -p "Tekan Enter untuk melanjutkan setelah memastikan Rclone selesai berjalan."
-
+# Step 9: Menyalakan ulang semua container Docker
 print_step "Menyalakan ulang semua container Docker" "yellow"
 docker start $(docker ps -a -q)
 print_color "green" "Semua container Docker telah dinyalakan kembali!"
 
+# Selesai
 print_color "cyan" "Instalasi selesai!"
