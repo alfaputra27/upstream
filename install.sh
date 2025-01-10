@@ -185,14 +185,16 @@ echo -e "\n\e[1;36mApakah Anda ingin melihat atau menghentikan proses nohup? (y/
 read -p "Masukkan pilihan (y/n): " pilihan
 
 if [[ "$pilihan" == "y" || "$pilihan" == "Y" ]]; then
-    echo -e "\n\e[1;34m1. Menampilkan Proses nohup\e[0m"
-    echo -e "\e[1;34m2. Menghentikan Proses nohup\e[0m"
+    echo -e "\n\e[1;34m1. Menampilkan Proses nohup tail -f nohup.out
+\e[0m"
+    echo -e "\e[1;34m2. Menghentikan Proses nohup kill $pid\e[0m"
     read -p "Pilih opsi (1/2): " opsi
 
     if [[ "$opsi" == "1" ]]; then
         echo -e "\nMenampilkan proses yang berjalan dengan nohup..."
         # Menampilkan proses nohup yang sedang berjalan
         ps aux | grep nohup
+        tail -f nohup.out
     elif [[ "$opsi" == "2" ]]; then
         echo -e "\nMenghentikan proses nohup..."
         # Menampilkan semua proses nohup dan meminta untuk memasukkan PID
