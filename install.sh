@@ -49,7 +49,25 @@ function sync_or_copy_rclone() {
         ACTION="sync"
     fi
 
-    read -p "Masukkan folder asal pada server (contoh: /opt/): " SRC_FOLDER
+    echo "Bagaimana Anda ingin memilih folder sumber?"
+    echo "1) Pilih dari isi folder /opt/ di host SFTP"
+    echo "2) Masukkan folder sumber secara manual"
+    read -p "Masukkan pilihan Anda (1 atau 2): " FOLDER_CHOICE
+
+    if [[ "$FOLDER_CHOICE" == "1" ]]; then
+        echo "Menampilkan isi folder '/opt/' di host SFTP..."
+        rclone lsf sftp:/opt/
+
+        echo "Pilih folder yang ingin ditransfer dari host:"
+        read -p "Masukkan nama folder sumber: " SRC_FOLDER_NAME
+        SRC_FOLDER="/opt/$SRC_FOLDER_NAME"
+    elif [[ "$FOLDER_CHOICE" == "2" ]]; then
+        read -p "Masukkan folder sumber pada host (contoh: /opt/folder): " SRC_FOLDER
+    else
+        echo "Pilihan tidak valid. Keluar dari proses."
+        exit 1
+    fi
+
     read -p "Masukkan folder tujuan pada lokal (contoh: /opt/): " DEST_FOLDER
 
     echo "Menjalankan Rclone $ACTION dari $SRC_FOLDER ke $DEST_FOLDER..."
