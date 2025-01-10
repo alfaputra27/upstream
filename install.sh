@@ -1,9 +1,9 @@
 #!/bin/bash
 
 # ===========================================
-# Script By www.pstream.id
-# Jangan menyebar luaskan script ini diluar member upstream.id
-# Email: support@upstream.id
+#        \033[1;36mScript By www.pstream.id\033[0m
+#     \033[1;33mJangan menyebar luaskan script ini diluar member upstream.id\033[0m
+#           \033[1;32mEmail: support@upstream.id\033[0m
 # ===========================================
 
 # Fungsi untuk mencetak teks dengan warna
@@ -17,9 +17,22 @@ function print_color() {
         "blue") echo -e "\033[34m$TEXT\033[0m" ;;
         "cyan") echo -e "\033[36m$TEXT\033[0m" ;;
         "bold") echo -e "\033[1m$TEXT\033[0m" ;;
+        "bg_red") echo -e "\033[41m$TEXT\033[0m" ;;
+        "bg_green") echo -e "\033[42m$TEXT\033[0m" ;;
+        "bg_yellow") echo -e "\033[43m$TEXT\033[0m" ;;
         *) echo "$TEXT" ;;
     esac
 }
+
+# Header Tampilan Awal
+clear
+print_color "cyan" "=========================================="
+print_color "bold" "        \033[1;36mScript By www.pstream.id\033[0m"
+print_color "yellow" "     \033[1;33mJangan menyebar luaskan script ini diluar member upstream.id\033[0m"
+print_color "green" "           \033[1;32mEmail: support@upstream.id\033[0m"
+print_color "cyan" "=========================================="
+echo
+echo "Memulai instalasi... Harap tunggu."
 
 # Fungsi untuk menampilkan progress bar
 function progress_bar() {
@@ -49,9 +62,6 @@ if [ "$(id -u)" != "0" ]; then
     print_color "red" "Skrip ini harus dijalankan sebagai root. Gunakan sudo."
     exit 1
 fi
-
-# Memulai instalasi
-print_color "cyan" "Memulai proses instalasi..."
 
 # Step 1: Tambahkan GPG key resmi Docker
 print_step "Menambahkan GPG key resmi Docker" "green"
