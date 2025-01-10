@@ -52,6 +52,15 @@ function print_step() {
     print_color "$COLOR" "======================================="
 }
 
+# Fungsi menjalankan proses dengan screen
+function run_with_screen() {
+    local SESSION_NAME=$1
+    local COMMAND=$2
+    screen -dmS "$SESSION_NAME" bash -c "$COMMAND"
+    print_color "green" "Proses telah dijalankan dalam sesi screen: $SESSION_NAME"
+    print_color "yellow" "Gunakan perintah 'screen -r $SESSION_NAME' untuk melihat proses."
+}
+
 # Periksa apakah dijalankan dengan hak akses root
 if [ "$(id -u)" != "0" ]; then
     print_color "red" "Skrip ini harus dijalankan sebagai root. Gunakan sudo."
@@ -119,94 +128,21 @@ else
     print_color "yellow" "Langkah Rclone dilewati!"
 fi
 
-# Step 7: Membuat container Docker
-print_step "Membuat container Docker" "blue"
-read -p "Masukkan jumlah container yang ingin dibuat: " NUM_CONTAINERS
-for (( i=1; i<=NUM_CONTAINERS; i++ ))
-do
-    echo "Konfigurasi untuk container ke-$i:"
-    read -p "Masukkan nama container: " CONTAINER_NAME
-    read -p "Masukkan port yang digunakan: " CONTAINER_PORT
-    CONFIG_PATH="/opt/${CONTAINER_NAME}/config"
-    DATA_PATH="/opt/${CONTAINER_NAME}/data"
-    mkdir -p $CONFIG_PATH $DATA_PATH
-    docker run -d --restart=always --name $CONTAINER_NAME \
-        -v $CONFIG_PATH:/core/config -v $DATA_PATH:/core/data \
-        -p $CONTAINER_PORT:8080 \
-        datarhei/restreamer:latest
-done
-print_color "green" "Semua container Docker telah dibuat!"
-
-# Step 8: Pilih fungsi Rclone (Sync atau Copy)
-print_step "Pilih fungsi Rclone (Sync atau Copy)" "cyan"
-echo "1) Sync"
-echo "2) Copy"
-read -p "Masukkan pilihan Anda (1 atau 2): " RCLONE_ACTION
-if [[ "$RCLONE_ACTION" == "1" ]]; then
-    ACTION="sync"
-elif [[ "$RCLONE_ACTION" == "2" ]]; then
-    ACTION="copy"
-else
-    ACTION="sync"
-fi
-
-# Menampilkan folder yang ada dalam /opt/ untuk dipilih
-print_step "Menampilkan folder dalam /opt/" "blue"
+# Step 7: Menampilkan folder dan menjalankan Rclone
+print_step "Menampilkan folder dalam /opt/ dan menjalankan Rclone" "blue"
 print_color "cyan" "Daftar folder dalam /opt/:"
-FOLDERS=$(ls /opt)
-echo "$FOLDERS"
-echo
-
-# Menampilkan folder yang ada di sftp:/opt untuk dipilih
-print_step "Menampilkan folder dalam sftp:/opt/" "blue"
+ls /opt
 print_color "cyan" "Daftar folder dalam sftp:/opt/:"
-RCLONE_SFTP_FOLDERS=$(rclone lsd sftp:/opt)
-echo "$RCLONE_SFTP_FOLDERS"
-echo
-
-# Meminta pengguna memilih folder sumber
-echo "Pilih folder sumber (misal: /opt/folder_sumber):"
-read -p "Masukkan nama folder sumber: " SRC_FOLDER
-
-# Meminta pengguna memasukkan folder tujuan
-echo "Masukkan folder tujuan (misal: /opt/folder_tujuan):"
+rclone lsd sftp:/opt
+read -p "Masukkan folder sumber: " SRC_FOLDER
 read -p "Masukkan folder tujuan: " DEST_FOLDER
+read -p "Pilih aksi Rclone (sync/copy): " ACTION
+run_with_screen "rclone_process" "rclone $ACTION -P sftp:$SRC_FOLDER $DEST_FOLDER"
 
-print_step "Menjalankan Rclone $ACTION" "green"
-nohup rclone $ACTION -P sftp:$SRC_FOLDER $DEST_FOLDER &
-
-# Step 9: Menyalakan ulang semua container Docker
+# Step 8: Menyalakan ulang semua container Docker
 print_step "Menyalakan ulang semua container Docker" "yellow"
-nohup docker start $(docker ps -a -q) &
+run_with_screen "docker_restart" "docker start $(docker ps -a -q)"
 
-print_color "green" "Proses telah berjalan di latar belakang. Sesi SSH dapat ditutup."
-# Menambahkan Opsi untuk Menampilkan atau Menghentikan Proses nohup
-echo -e "\n\e[1;36mApakah Anda ingin melihat atau menghentikan proses nohup? (y/n)\e[0m"
-read -p "Masukkan pilihan (y/n): " pilihan
-
-if [[ "$pilihan" == "y" || "$pilihan" == "Y" ]]; then
-    echo -e "\n\e[1;34m1. Menampilkan Proses nohup tail -f nohup.out
-\e[0m"
-    echo -e "\e[1;34m2. Menghentikan Proses nohup kill $pid\e[0m"
-    read -p "Pilih opsi (1/2): " opsi
-
-    if [[ "$opsi" == "1" ]]; then
-        echo -e "\nMenampilkan proses yang berjalan dengan nohup..."
-        # Menampilkan proses nohup yang sedang berjalan
-        ps aux | grep nohup
-        tail -f nohup.out
-    elif [[ "$opsi" == "2" ]]; then
-        echo -e "\nMenghentikan proses nohup..."
-        # Menampilkan semua proses nohup dan meminta untuk memasukkan PID
-        ps aux | grep nohup
-        read -p "Masukkan PID proses nohup yang ingin dihentikan: " pid
-        kill $pid
-        echo -e "\nProses dengan PID $pid telah dihentikan."
-    else
-        echo -e "\nPilihan tidak valid. Mengakhiri script."
-    fi
-else
-    echo -e "\nTidak menampilkan atau menghentikan proses nohup."
-fi
-
-echo -e "\n\e[1;32mInstalasi selesai!\e[0m"
+# Menampilkan informasi akhir
+print_color "green" "Semua proses telah dijalankan dalam sesi screen."
+print_color "yellow" "Gunakan 'screen -ls' untuk melihat daftar sesi screen yang aktif."
