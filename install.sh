@@ -7,6 +7,7 @@ if [ "$(id -u)" != "0" ]; then
     echo "Skrip ini harus dijalankan sebagai root. Gunakan sudo."
     exit 1
 fi
+chmod +x install.sh
 
 echo "Memulai instalasi..."
 
