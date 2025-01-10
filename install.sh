@@ -149,8 +149,22 @@ elif [[ "$RCLONE_ACTION" == "2" ]]; then
 else
     ACTION="sync"
 fi
-read -p "Masukkan folder sumber: " SRC_FOLDER
+
+# Menampilkan folder yang ada dalam /opt/ untuk dipilih
+print_step "Menampilkan folder dalam /opt/" "blue"
+print_color "cyan" "Daftar folder dalam /opt/:"
+FOLDERS=$(ls /opt)
+echo "$FOLDERS"
+echo
+
+# Meminta pengguna memilih folder sumber
+echo "Pilih folder sumber (misal: /opt/folder_sumber):"
+read -p "Masukkan nama folder sumber: " SRC_FOLDER
+
+# Meminta pengguna memasukkan folder tujuan
+echo "Masukkan folder tujuan (misal: /opt/folder_tujuan):"
 read -p "Masukkan folder tujuan: " DEST_FOLDER
+
 print_step "Menjalankan Rclone $ACTION" "green"
 rclone $ACTION -P sftp:$SRC_FOLDER $DEST_FOLDER
 
