@@ -132,10 +132,20 @@ function run_rclone() {
         ACTION="sync"
     fi
 
-    # Memilih folder sumber dan tujuan
-    print_color "cyan" "Daftar folder dalam /opt/:"
-    ls /opt
-    echo
+# Menampilkan folder yang ada dalam /opt/ untuk dipilih
+print_step "Menampilkan folder dalam /opt/" "blue"
+print_color "cyan" "Daftar folder dalam /opt/:"
+FOLDERS=$(ls /opt)
+echo "$FOLDERS"
+echo
+
+# Menampilkan folder yang ada di sftp:/opt untuk dipilih
+print_step "Menampilkan folder dalam sftp:/opt/" "blue"
+print_color "cyan" "Daftar folder dalam sftp:/opt/:"
+RCLONE_SFTP_FOLDERS=$(rclone lsd sftp:/opt)
+echo "$RCLONE_SFTP_FOLDERS"
+echo
+    
     read -p "Masukkan folder sumber (misal: /opt/folder_sumber): " SRC_FOLDER
     read -p "Masukkan folder tujuan (misal: /opt/folder_tujuan): " DEST_FOLDER
 
