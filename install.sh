@@ -23,7 +23,7 @@ function print_color() {
 
 # Header tampilan awal
 echo -e "\033[1;36m==========================================\033[0m"
-echo -e "\033[1;36m Script By www.upstream.id\033[0m"
+echo -e "\033[1;36m Script By www.pstream.id\033[0m"
 echo -e "\033[1;33m Jangan menyebar luaskan script ini diluar member upstream.id\033[0m"
 echo -e "\033[1;32m Email : support@upstream.id\033[0m"
 echo -e "\033[1;36m==========================================\033[0m"
@@ -137,7 +137,7 @@ do
 done
 print_color "green" "Semua container Docker telah dibuat!"
 
-# Step 8: Pilih fungsi Rclone
+# Step 8: Pilih fungsi Rclone (Sync atau Copy)
 print_step "Pilih fungsi Rclone (Sync atau Copy)" "cyan"
 echo "1) Sync"
 echo "2) Copy"
@@ -150,18 +150,18 @@ else
     ACTION="sync"
 fi
 
-# Menampilkan folder yang ada di lokal /opt/ untuk dipilih
+# Menampilkan folder yang ada dalam /opt/ untuk dipilih
 print_step "Menampilkan folder dalam /opt/" "blue"
 print_color "cyan" "Daftar folder dalam /opt/:"
 FOLDERS=$(ls /opt)
 echo "$FOLDERS"
 echo
 
-# Menampilkan folder remote server /opt/ untuk dipilih
-print_step "Menampilkan remote server file /opt/" "blue"
-print_color "cyan" "Daftar folder dalam /opt/ remote:"
-FOLDERSserver=$(rclone ls sftp:/opt/)
-echo "$FOLDERSserver"
+# Menampilkan folder yang ada di sftp:/opt untuk dipilih
+print_step "Menampilkan folder dalam sftp:/opt/" "blue"
+print_color "cyan" "Daftar folder dalam sftp:/opt/:"
+RCLONE_SFTP_FOLDERS=$(rclone lsd sftp:/opt)
+echo "$RCLONE_SFTP_FOLDERS"
 echo
 
 # Meminta pengguna memilih folder sumber
