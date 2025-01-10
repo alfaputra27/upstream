@@ -29,20 +29,6 @@ echo -e "\033[1;32m Email : support@upstream.id\033[0m"
 echo -e "\033[1;36m==========================================\033[0m"
 echo
 
-# Fungsi untuk menampilkan progress bar
-function progress_bar() {
-    local DURATION=$1
-    local PROGRESS=0
-    local INCREMENT=$((100 / DURATION))
-    echo -n "["
-    for ((i=0; i<100; i+=INCREMENT)); do
-        sleep 1
-        echo -n "#"
-        ((PROGRESS += INCREMENT))
-    done
-    echo "]"
-}
-
 # Fungsi untuk mencetak header proses
 function print_step() {
     local STEP=$1
@@ -52,47 +38,11 @@ function print_step() {
     print_color "$COLOR" "======================================="
 }
 
-# Fungsi menjalankan proses dengan screen
-function run_with_screen() {
-    local SESSION_NAME=$1
-    local COMMAND=$2
-    screen -dmS "$SESSION_NAME" bash -c "$COMMAND"
-    print_color "green" "Proses telah dijalankan dalam sesi screen: $SESSION_NAME"
-    print_color "yellow" "Gunakan perintah 'screen -r $SESSION_NAME' untuk melihat proses."
-}
-
 # Periksa apakah dijalankan dengan hak akses root
 if [ "$(id -u)" != "0" ]; then
     print_color "red" "Skrip ini harus dijalankan sebagai root. Gunakan sudo."
     exit 1
 fi
-
-# Step 1: Tambahkan GPG key resmi Docker
-print_step "Menambahkan GPG key resmi Docker" "green"
-progress_bar 5
-apt-get update -y > /dev/null 2>&1
-apt-get install -y ca-certificates curl gnupg > /dev/null 2>&1
-install -m 0755 -d /etc/apt/keyrings > /dev/null 2>&1
-curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg > /dev/null 2>&1
-chmod a+r /etc/apt/keyrings/docker.gpg
-
-# Step 2: Tambahkan repository Docker
-print_step "Menambahkan repository Docker ke Apt sources" "yellow"
-progress_bar 3
-echo \
-  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
-  $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
-  tee /etc/apt/sources.list.d/docker.list > /dev/null
-
-# Step 3: Perbarui sistem
-print_step "Memperbarui sistem" "blue"
-progress_bar 5
-apt-get update -y > /dev/null 2>&1
-
-# Step 4: Instal Docker
-print_step "Menginstal Docker" "green"
-progress_bar 7
-apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin > /dev/null 2>&1
 
 # Menambahkan opsi untuk instalasi dan konfigurasi Rclone
 echo
@@ -100,14 +50,8 @@ print_color "cyan" "Apakah Anda ingin menginstal dan mengonfigurasi Rclone? (y/n
 read -p "Pilih (y/n): " INSTALL_RCLONE
 
 if [[ "$INSTALL_RCLONE" == "y" || "$INSTALL_RCLONE" == "Y" ]]; then
-    # Step 5: Instal Rclone
-    print_step "Menginstal Rclone" "cyan"
-    progress_bar 4
+    # Instal dan konfigurasi Rclone
     apt-get install -y rclone > /dev/null 2>&1
-
-    # Step 6: Konfigurasi Rclone
-    print_step "Mengatur konfigurasi Rclone" "yellow"
-    progress_bar 6
     mkdir -p /root/.config/rclone
     read -p "Masukkan nama host: " RCLONE_HOST
     read -p "Masukkan port (default: 22): " RCLONE_PORT
@@ -127,8 +71,10 @@ EOF
 else
     print_color "yellow" "Langkah Rclone dilewati!"
 fi
-# Step 8: Pilih fungsi Rclone (Sync atau Copy)
-print_step "Pilih fungsi Rclone (Sync atau Copy)" "cyan"
+
+# Pilih fungsi Rclone (Sync atau Copy)
+echo
+print_color "cyan" "Pilih fungsi Rclone (Sync atau Copy)"
 echo "1) Sync"
 echo "2) Copy"
 read -p "Masukkan pilihan Anda (1 atau 2): " RCLONE_ACTION
@@ -140,20 +86,30 @@ else
     ACTION="sync"
 fi
 
-# Step 7: Menampilkan folder dan menjalankan Rclone
-print_step "Menampilkan folder dalam /opt/ dan menjalankan Rclone" "blue"
-print_color "cyan" "Daftar folder dalam /opt/:"
-ls /opt
-print_color "cyan" "Daftar folder dalam sftp:/opt/:"
-rclone lsd sftp:/opt
-read -p "Masukkan folder sumber: " SRC_FOLDER
-read -p "Masukkan folder tujuan: " DEST_FOLDER
-run_with_screen "rclone_process" "rclone $ACTION -P sftp:$SRC_FOLDER $DEST_FOLDER"
+# Menampilkan folder lokal dan sftp
+print_step "Menampilkan folder dalam /opt/" "blue"
+FOLDERS=$(ls /opt)
+echo "$FOLDERS"
 
-# Step 8: Menyalakan ulang semua container Docker
+print_step "Menampilkan folder dalam sftp:/opt/" "blue"
+RCLONE_SFTP_FOLDERS=$(rclone lsd sftp:/opt)
+echo "$RCLONE_SFTP_FOLDERS"
+
+# Meminta pengguna memasukkan folder sumber dan tujuan
+read -p "Masukkan folder sumber (misal: /opt/folder_sumber): " SRC_FOLDER
+read -p "Masukkan folder tujuan (misal: /opt/folder_tujuan): " DEST_FOLDER
+
+# Jalankan proses Rclone
+print_step "Menjalankan Rclone $ACTION" "green"
+screen -dmS rclone_process rclone $ACTION -P $SRC_FOLDER $DEST_FOLDER
+
+# Menunggu proses Rclone selesai dan menyalakan Docker
+print_step "Menunggu Rclone selesai" "yellow"
+screen -ls
+read -p "Tekan Enter untuk melanjutkan setelah memastikan Rclone selesai berjalan."
+
 print_step "Menyalakan ulang semua container Docker" "yellow"
-run_with_screen "docker_restart" "docker start $(docker ps -a -q)"
+docker start $(docker ps -a -q)
+print_color "green" "Semua container Docker telah dinyalakan kembali!"
 
-# Menampilkan informasi akhir
-print_color "green" "Semua proses telah dijalankan dalam sesi screen."
-print_color "yellow" "Gunakan 'screen -ls' untuk melihat daftar sesi screen yang aktif."
+print_color "cyan" "Instalasi selesai!"
