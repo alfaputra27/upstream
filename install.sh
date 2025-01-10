@@ -1,6 +1,8 @@
 #!/bin/bash
 
-# Skrip instalasi otomatis untuk Ubuntu
+echo "Skrip by upstream.id Khusus Member upstream.id"
+echo "Dilarang keras menyebar luaskan script ini."
+echo "https://www.upstream.id"
 
 # Periksa apakah dijalankan dengan hak akses root
 if [ "$(id -u)" != "0" ]; then
