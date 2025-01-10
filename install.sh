@@ -372,9 +372,9 @@ echo -e "\033[1;36m==========================================\033[0m"
     echo " Pilihan Menu"
     echo "=========================================="
     echo "A) Migrasi LiveStream"
-    echo "1) Install All"
-    echo "B) Install Screen"
-    echo "2) Edit Rclone"
+    echo "B) Install All"
+    echo "1) Install Screen"
+    echo "2) Config Rclone"
     echo "3) Create Container"
     echo "4) Docker Running List"
     echo "5) Start Container"
@@ -386,8 +386,8 @@ echo -e "\033[1;36m==========================================\033[0m"
     read -p "Pilih opsi: " CHOICE
     case $CHOICE in
         A) migrasi_liveStream ;;
-        B) install_screen ;;
-        1) install_all ;;
+        B) install_all ;;
+        1) install_screen ;;
         2) configure_rclone ;;
         3) create_container ;;
         4) list_docker_containers ;;
